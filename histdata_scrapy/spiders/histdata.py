@@ -2,8 +2,8 @@
 import scrapy
 
 
-class HistdataSpider(scrapy.Spider):
-    name = 'fxpair_list'
+class HistDataSpider(scrapy.Spider):
+    name = 'histdata'
     allowed_domains = ['histdata.com']
     start_urls = ['http://www.histdata.com/download-free-forex-data/?/ascii/tick-data-quotes']
 
