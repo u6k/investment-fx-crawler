@@ -9,6 +9,7 @@ autopep8 = "*"
 nose = "*"
 
 [packages]
+scrapy = "*"
 
 [requires]
 python_version = "3.7"
