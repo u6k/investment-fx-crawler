@@ -1,0 +1,16 @@
+language: python
+
+addons:
+  apt:
+    packages:
+      - docker-ce
+
+script:
+  - cp .env.sample .env
+  - docker-compose build
+  - docker-compose run app
+
+notifications:
+  slack:
+    secure: RVwLs945Z2bAMF7h3dwxLi7wSlAioie5w5RPgb/zlfnc4bjLsXzpUA9t/8nEDHoGUlkvRLEaalUoG29CNdrjxnDt+mXAXYQ4sijRRjauF182mQfBSrv0aWmFdjJnsWOELDF12vHfiuZeEuSAF1NdCbGSXkuD9vnQbK5bEcBsuhIcW1IU9bBxCScFwuWDljxTxp/5NIDSvEKwZHYg8o0vcR/wQZgtO2jujTHXL7W28gePkPnYENvRyyTm4Uuq3VK705fjjnzLouZ0lyN9SBg2SyGaFo62ex6QyBFG6kEMr+kLM5wtnpzKW1N8k5/R1QqE0Bs0oJJ2jAlF4mGHDDlVWOY2RD6B/d+5QstVedvLBNNJxxtTTHyucCcbMKeN5YTWPG5wkthtg8+H3Y05Q2QQ3dwJoRlKNlu7+vDjKALM2N2dhuXgbew42FpBlXqhhAjIt+FUKWL0GidZ54iWiwP7/hlKy8hHr+FVAbyMotoYqSxtXsYVGrKdCXRZ22/5v+0wUj5QCsD+HVXnvI+eC+pEkMtIYYw9NsmapwdMQ3yNRAC8svMEeogmernJIR1Lst/yJ8U/wA5qOfKtoDIy3/XPZnHZvwLL6f8i5TF3P1Ya8cN1MeP8gsrzM25h3icGq9NlWSqgRCjroqDtOD/SopBqIbA9OZr0W4EwXVpN/myft2o=
+
