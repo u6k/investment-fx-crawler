@@ -17,6 +17,7 @@ NEWSPIDER_MODULE = 'histdata_scrapy.spiders'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 # USER_AGENT = 'histdata_scrapy (+http://www.yourdomain.com)'
+USER_AGENT = 'Mozilla/5.0 (X11; CrOS x86_64 6415.2.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2202.5 Safari/537.36'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
