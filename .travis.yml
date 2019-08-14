@@ -1,0 +1,12 @@
+language: python
+
+addons:
+  apt:
+    packages:
+      - docker-ce
+
+script:
+  - cp .env.sample .env
+  - docker-compose build
+  - docker-compose run app
+
