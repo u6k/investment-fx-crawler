@@ -20,7 +20,7 @@ NEWSPIDER_MODULE = 'histdata_scrapy.spiders'
 USER_AGENT = 'Mozilla/5.0 (X11; CrOS x86_64 6415.2.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2202.5 Safari/537.36'
 
 # Obey robots.txt rules
-ROBOTSTXT_OBEY = True
+ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 # CONCURRENT_REQUESTS = 32
@@ -89,3 +89,6 @@ HTTPCACHE_EXPIRATION_SECS = 0
 HTTPCACHE_DIR = 'httpcache'
 HTTPCACHE_IGNORE_HTTP_CODES = []
 HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+
+DOWNLOAD_TIMEOUT = 10
+DOWNLOAD_WARNSIZE = 0
