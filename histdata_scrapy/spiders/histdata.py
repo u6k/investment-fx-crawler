@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 import scrapy
+from zipfile import ZipFile
+from io import BytesIO
+import pandas as pd
 
 
 class HistDataSpider(scrapy.Spider):
@@ -81,3 +84,11 @@ class HistDataSpider(scrapy.Spider):
 
     def parse_zip_download(self, response):
         self.logger.info(f"parse_zip_download: content-type={response.headers['Content-Type']}, size={len(response.body)}")
+
+        with BytesIO(response.body) as buf:
+            with ZipFile(buf) as dl_zip:
+                for file_name in dl_zip.namelist():
+                    if file_name.endswith(".csv"):
+                        with BytesIO(dl_zip.read(file_name)) as csv_buf:
+                            df = pd.read_csv(csv_buf, names=["datetime", "bid", "ask", "volume"])
+                            self.logger.info(df)
