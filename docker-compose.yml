@@ -8,4 +8,16 @@ services:
     volumes:
       - ".:/var/myapp"
     command: /bin/sh -c "pipenv install -d && pipenv run lint && pipenv run test"
+    depends_on:
+      - "db"
+  db:
+    image: postgres:11
+    env_file:
+      - ".env"
+    volumes:
+      - "db:/var/lib/postgresql/data"
+
+volumes:
+  db:
+    driver: local
 
