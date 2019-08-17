@@ -102,16 +102,23 @@ class HistDataSpider(scrapy.Spider):
                         with BytesIO(dl_zip.read(file_name)) as csv_buf:
                             df = pd.read_csv(csv_buf, names=["timestamp_str", "bid", "ask", "volume"])
                             df["timestamp"] = pd.to_datetime(df["timestamp_str"] + "000", format="%Y%m%d %H%M%S%f") + pd.Timedelta(hours=5)
-                            df["fxpair"] = fxpair
-                            df["id"] = df["fxpair"].str[:3] + df["fxpair"].str[-3:] + "_" + df["timestamp"].dt.strftime("%Y%m%d%H%M%S%f")
-                            df = df.drop("timestamp_str", axis=1)
-                            df = df.set_index("id")
+                            df = df.set_index("timestamp")
 
                             self.logger.info(df)
 
-                            self.logger.info("insert into db start. rows={len(df)}")
-                            df.to_sql(name="ticks", con=self.get_db_connection(), if_exists="append", index_label="id")
-                            self.logger.info("insert into db finish.")
+                            for freq in ["S", "10S", "T", "H", "D"]:
+                                df_ohlc = df["ask"].resample(freq).ohlc().dropna()
+                                df_ohlc["fxpair"] = fxpair
+                                df_ohlc["freq"] = freq
+                                df_ohlc["timestamp"] = df_ohlc.index
+                                df_ohlc["id"] = df_ohlc["fxpair"].str[:3] + df_ohlc["fxpair"].str[-3:] + "_" + df_ohlc["freq"] + "_" + df_ohlc["timestamp"].dt.strftime("%Y%m%d%H%M%S%f")
+                                df_ohlc = df_ohlc.set_index("id")
+
+                                self.logger.info(df_ohlc)
+
+                                self.logger.info(f"insert into db start. rows={len(df_ohlc)}")
+                                df_ohlc.to_sql(name="historical", con=self.get_db_connection(), if_exists="append", index_label="id")
+                                self.logger.info("insert into db finish.")
 
     def get_db_connection(self):
         url = f"postgresql://{os.environ['DB_USERNAME']}:{os.environ['DB_PASSWORD']}@{os.environ['DB_HOST']}:{os.environ['DB_PORT']}/{os.environ['DB_DATABASE']}"
