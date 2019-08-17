@@ -3,6 +3,8 @@ import scrapy
 from zipfile import ZipFile
 from io import BytesIO
 import pandas as pd
+from sqlalchemy import create_engine
+import os
 
 
 class HistDataSpider(scrapy.Spider):
@@ -11,8 +13,8 @@ class HistDataSpider(scrapy.Spider):
     start_urls = ['http://www.histdata.com/download-free-forex-data/?/ascii/tick-data-quotes']
 
     target_fxpairs = ["USD/JPY", "EUR/USD"]
-    # target_month = (2019, 8)
-    target_month = None
+    target_month = (2019, 8)
+    # target_month = None
 
     def parse(self, response):
         self.logger.info(f"parse: url={response.url}")
@@ -27,10 +29,11 @@ class HistDataSpider(scrapy.Spider):
             if fxpair not in self.target_fxpairs:
                 continue
 
-            yield scrapy.Request(url, callback=self.parse_years)
+            yield scrapy.Request(url, callback=self.parse_years, meta={"fxpair": fxpair})
 
     def parse_years(self, response):
-        self.logger.info(f"parse_years: url={response.url}")
+        fxpair = response.meta["fxpair"]
+        self.logger.info(f"parse_years: url={response.url}, fxpair={fxpair}")
 
         for link_cell in response.xpath("//div[@class='page-content']/table/tr/td"):
             url = link_cell.xpath("a/@href").extract()[0]
@@ -43,27 +46,31 @@ class HistDataSpider(scrapy.Spider):
                 if self.target_month[0] != year:
                     continue
 
-            yield scrapy.Request(url, callback=self.parse_months)
+            yield scrapy.Request(url, callback=self.parse_months, meta={"fxpair": fxpair, "year": year})
 
     def parse_months(self, response):
-        self.logger.info(f"parse_months: url={response.url}")
+        fxpair = response.meta["fxpair"]
+        year = response.meta["year"]
+        self.logger.info(f"parse_months: url={response.url}, fxpair={fxpair}, year={year}")
 
         for link in response.xpath("//div[@class='page-content']/p/a"):
             url = link.xpath("@href").extract()[0]
             url = response.urljoin(url)
-            year = int(url.split("/")[-2])
             month = int(url.split("/")[-1])
 
-            self.logger.info(f"year={year}, month={month}, url={url}")
+            self.logger.info(f"month={month}, url={url}")
 
             if self.target_month is not None:
                 if self.target_month[0] != year or self.target_month[1] != month:
                     continue
 
-            yield scrapy.Request(url, callback=self.parse_download)
+            yield scrapy.Request(url, callback=self.parse_download, meta={"fxpair": fxpair, "year": year, "month": month})
 
     def parse_download(self, response):
-        self.logger.info(f"parse_download: url={response.url}")
+        fxpair = response.meta["fxpair"]
+        year = response.meta["year"]
+        month = response.meta["month"]
+        self.logger.info(f"parse_download: url={response.url}, fxpair={fxpair}, year={year}, month={month}")
 
         for form_node in response.xpath("//form[@id='file_down']"):
             url = form_node.xpath("@action").extract()[0]
@@ -80,15 +87,32 @@ class HistDataSpider(scrapy.Spider):
 
             self.logger.info(f"url={url}, params={params}")
 
-            yield scrapy.FormRequest(url, formdata=params, callback=self.parse_zip_download)
+            yield scrapy.FormRequest(url, formdata=params, callback=self.parse_zip_download, meta={"fxpair": fxpair, "year": year, "month": month})
 
     def parse_zip_download(self, response):
-        self.logger.info(f"parse_zip_download: content-type={response.headers['Content-Type']}, size={len(response.body)}")
+        fxpair = response.meta["fxpair"]
+        year = response.meta["year"]
+        month = response.meta["month"]
+        self.logger.info(f"parse_zip_download: content-type={response.headers['Content-Type']}, size={len(response.body)}, fxpair={fxpair}, year={year}, month={month}")
 
         with BytesIO(response.body) as buf:
             with ZipFile(buf) as dl_zip:
                 for file_name in dl_zip.namelist():
                     if file_name.endswith(".csv"):
                         with BytesIO(dl_zip.read(file_name)) as csv_buf:
-                            df = pd.read_csv(csv_buf, names=["datetime", "bid", "ask", "volume"])
+                            df = pd.read_csv(csv_buf, names=["timestamp_str", "bid", "ask", "volume"])
+                            df["timestamp"] = pd.to_datetime(df["timestamp_str"] + "000", format="%Y%m%d %H%M%S%f") + pd.Timedelta(hours=5)
+                            df["fxpair"] = fxpair
+                            df["id"] = df["fxpair"].str[:3] + df["fxpair"].str[-3:] + "_" + df["timestamp"].dt.strftime("%Y%m%d%H%M%S%f")
+                            df = df.drop("timestamp_str", axis=1)
+                            df = df.set_index("id")
+
                             self.logger.info(df)
+
+                            self.logger.info("insert into db start. rows={len(df)}")
+                            df.to_sql(name="ticks", con=self.get_db_connection(), if_exists="append", index_label="id")
+                            self.logger.info("insert into db finish.")
+
+    def get_db_connection(self):
+        url = f"postgresql://{os.environ['DB_USERNAME']}:{os.environ['DB_PASSWORD']}@{os.environ['DB_HOST']}:{os.environ['DB_PORT']}/{os.environ['DB_DATABASE']}"
+        return create_engine(url)
