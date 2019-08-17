@@ -18,15 +18,17 @@ depends_on = None
 
 def upgrade():
     op.create_table(
-        "ticks",
-        sa.Column("id", sa.String(30), primary_key=True),
+        "historical",
+        sa.Column("id", sa.String(40), primary_key=True),
         sa.Column("timestamp", sa.DateTime, nullable=False),
         sa.Column("fxpair", sa.String(10), nullable=False),
-        sa.Column("bid", sa.Float, nullable=False),
-        sa.Column("ask", sa.Float, nullable=False),
-        sa.Column("volume", sa.Integer, nullable=False),
+        sa.Column("freq", sa.String(10), nullable=False),
+        sa.Column("open", sa.Float, nullable=False),
+        sa.Column("high", sa.Float, nullable=False),
+        sa.Column("low", sa.Float, nullable=False),
+        sa.Column("close", sa.Float, nullable=False),
     )
 
 
 def downgrade():
-    op.drop_table("ticks")
+    op.drop_table("historical")
