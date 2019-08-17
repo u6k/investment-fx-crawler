@@ -9,6 +9,10 @@ autopep8 = "*"
 nose = "*"
 
 [packages]
+scrapy = "*"
+pandas = "*"
+alembic = "*"
+psycopg2 = "*"
 
 [requires]
 python_version = "3.7"
@@ -17,3 +21,6 @@ python_version = "3.7"
 lint = "flake8 ."
 fix = "autopep8 -ivr ."
 test = "nosetests tests"
+crawl = "scrapy crawl histdata"
+migrate = "alembic upgrade head"
+
