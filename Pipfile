@@ -23,4 +23,5 @@ fix = "autopep8 -ivr ."
 test = "nosetests tests"
 crawl = "scrapy crawl histdata"
 migrate = "alembic upgrade head"
+migrate_downgrade = "alembic downgrade base"
 
