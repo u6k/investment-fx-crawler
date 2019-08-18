@@ -106,7 +106,7 @@ class HistDataSpider(scrapy.Spider):
 
                             self.logger.info(df)
 
-                            for freq in ["S", "10S", "T", "H", "D"]:
+                            for freq in ["10S", "H", "D"]:
                                 df_ohlc = df["ask"].resample(freq).ohlc().dropna()
                                 df_ohlc["fxpair"] = fxpair
                                 df_ohlc["freq"] = freq
